@@ -1,97 +1,146 @@
 class Product {
-  constructor(title, price) {
+  constructor(productId, title, price, quantity) {
+    this.productId = productId;
     this.title = title;
     this.price = price;
+    this.quantity = quantity;
+  }
+
+  getPrice() {
+    return this.price * this.quantity;
   }
 }
 
+let productCounter = 0;
+
 let isSidebarOpen = false;
-const ul = document.getElementById('ul-cart');
+const ul = document.getElementById("ul-cart");
 const totalSumElement = document.getElementById("total-sum");
 let totalSum = 0;
 
-let productArray = localStorage.getItem("cart") ? JSON.parse(localStorage.getItem("cart")) : [];
+let productArray = localStorage.getItem("cart")
+  ? JSON.parse(localStorage.getItem("cart"))
+  : [];
 localStorage.setItem("cart", JSON.stringify(productArray));
-const cartData = JSON.parse(localStorage.getItem("cart"));
+let cartData = JSON.parse(localStorage.getItem("cart"));
+cartData = cartData.map(
+  (product) =>
+    new Product(
+      product.productId,
+      product.title,
+      product.price,
+      product.quantity
+    )
+);
 
-const productDivMaker = (productName, productPrice) => {
-  // Create the main card div
-  const cardDiv = document.createElement('div');
-  cardDiv.className = 'card rounded-3 mb-4';
-
-  // Create the card body
-  const cardBody = document.createElement('div');
-  cardBody.className = 'card-body p-4';
-  cardDiv.appendChild(cardBody);
-
-  // Create the row
-  const rowDiv = document.createElement('div');
-  rowDiv.className = 'row d-flex justify-content-between align-items-center';
-  cardBody.appendChild(rowDiv);
-
-  // Product Name Column
-  const productNameCol = document.createElement('div');
-  productNameCol.className = 'col-md-3 col-lg-3 col-xl-3';
-  productNameCol.innerHTML = `<p class="lead fw-normal mb-2">${productName}</p>`;
-  rowDiv.appendChild(productNameCol);
-
-  // Quantity Adjuster Column
-  const quantityAdjusterCol = document.createElement('div');
-  quantityAdjusterCol.className = 'col-md-4 col-lg-4 col-xl-3 d-flex';
-  quantityAdjusterCol.innerHTML = `
-    <button class="btn btn-link px-2" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">
-      <i class="fas fa-minus"></i>
-    </button>
-    <input id="form1" min="0" name="quantity" value="${1}" type="number" class="form-control form-control-sm"/>
-    <button class="btn btn-link px-2" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">
-      <i class="fas fa-plus"></i>
-    </button>`;
-  rowDiv.appendChild(quantityAdjusterCol);
-
-  // Price Column
-  const priceCol = document.createElement('div');
-  priceCol.className = 'col-md-3 col-lg-2 col-xl-2 offset-lg-1';
-  priceCol.innerHTML = `<h5 class="mb-0">$${productPrice}</h5>`;
-  rowDiv.appendChild(priceCol);
-
-  // Delete Button Column
-  const deleteButtonCol = document.createElement('div');
-  deleteButtonCol.className = 'col-md-1 col-lg-1 col-xl-1 text-end';
-  deleteButtonCol.innerHTML = `<a href="#!" class="text-danger"><i class="fas fa-trash fa-lg"></i></a>`;
-  rowDiv.appendChild(deleteButtonCol);
-
-  // Add to the cart
-  ul.appendChild(cardDiv);
-  cardDiv.removeAttribute("hidden");
-  updateTotalSum();
+function findProductInCart(product) {
+  return cartData.find((p) => p.id === product.id);
 }
 
-cartData.forEach(product => {
-  productDivMaker(product.title, product.price);
-});
-updateTotalSum();
-
 function updateTotalSum() {
+  totalSum = 0;
 
-  // Calculate the total sum
-  productArray.forEach(product => {
-    totalSum += parseFloat(product.price);
-  });
+  if (cartData != null || cartData.length > 0) {
+    cartData.forEach((product) => {
+      totalSum += parseFloat(product.getPrice());
+    });
+  }
 
-  // Update the total sum element
   totalSumElement.textContent = `$${totalSum.toFixed(2)}`;
 }
 
+const productDivMaker = (product) => {
+  // Main card div
+  const cardDiv = document.createElement("div");
+  cardDiv.id = `div-${product.id}`;
+  cardDiv.className = "card rounded-3 mb-4";
+
+  // Card body
+  const cardBody = document.createElement("div");
+  cardBody.className = "card-body p-4";
+  cardDiv.appendChild(cardBody);
+
+  // Row
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "row d-flex justify-content-between align-items-center";
+  cardBody.appendChild(rowDiv);
+
+  // Product Name Column
+  const productNameCol = document.createElement("div");
+  productNameCol.className = "col-md-3 col-lg-3 col-xl-3";
+  productNameCol.innerHTML = `<p class="lead fw-normal mb-2">${product.title}</p>`;
+  rowDiv.appendChild(productNameCol);
+
+  // Quantity Adjuster Column
+  const quantityAdjusterCol = document.createElement("div");
+  quantityAdjusterCol.className = "col-md-4 col-lg-4 col-xl-3 d-flex";
+
+  // Decrease quantity button
+  const decreaseButton = document.createElement("button");
+  decreaseButton.className = "btn btn-link px-2";
+  decreaseButton.innerHTML = '<i class="fas fa-minus"></i>';
+  decreaseButton.addEventListener("click", function () {
+    this.parentNode.querySelector("input[type=number]").stepDown();
+
+    const clickedProduct = findProductInCart(product);
+    if (clickedProduct.quantity > 1) {
+      clickedProduct.quantity--;
+      localStorage.setItem("cart", JSON.stringify(cartData));
+      updateTotalSum();
+    }
+  });
+
+  // Quantity input
+  const quantityInput = document.createElement("input");
+  quantityInput.setAttribute("min", "1");
+  quantityInput.setAttribute("value", product.quantity);
+  quantityInput.setAttribute("type", "number");
+  quantityInput.className = "form-control form-control-sm";
+
+  // Increase quantity button
+  const increaseButton = document.createElement("button");
+  increaseButton.className = "btn btn-link px-2";
+  increaseButton.innerHTML = '<i class="fas fa-plus"></i>';
+  increaseButton.addEventListener("click", function () {
+    this.parentNode.querySelector("input[type=number]").stepUp();
+    findProductInCart(product).quantity++;
+    localStorage.setItem("cart", JSON.stringify(cartData));
+    updateTotalSum();
+  });
+
+  // Add all elements to the Quantity Adjuster and finally adding it to the Row
+  quantityAdjusterCol.appendChild(decreaseButton);
+  quantityAdjusterCol.appendChild(quantityInput);
+  quantityAdjusterCol.appendChild(increaseButton);
+  rowDiv.appendChild(quantityAdjusterCol);
+
+  // Price Column
+  const priceCol = document.createElement("div");
+  priceCol.className = "col-md-3 col-lg-2 col-xl-2 offset-lg-1";
+  priceCol.innerHTML = `<h5 class="mb-0">$${product.getPrice()}</h5>`;
+  rowDiv.appendChild(priceCol);
+
+  // Delete Button Column
+  const deleteButtonCol = document.createElement("div");
+  deleteButtonCol.className = "col-md-1 col-lg-1 col-xl-1 text-end";
+  deleteButtonCol.innerHTML = `<a href="#!" class="text-danger"><i class="fas fa-trash fa-lg"></i></a>`;
+  deleteButtonCol.addEventListener("click", () => deleteProduct(product.id));
+
+  rowDiv.appendChild(deleteButtonCol);
+  ul.appendChild(cardDiv);
+  cardDiv.removeAttribute("hidden");
+};
+
+cartData.forEach((product) => {
+  productDivMaker(product);
+});
+updateTotalSum();
 
 function toggleSidebar() {
   const sidebar = document.getElementById("shoppingCartSidebar");
   sidebar.classList.toggle("active");
   document.body.classList.toggle("no-scroll");
-
-  // Update the sidebar state based on the "active" class presence
   isSidebarOpen = sidebar.classList.contains("active");
-
-  // Adjust the width accordingly
   sidebar.style.width = isSidebarOpen ? "800px" : "0";
 }
 
@@ -103,7 +152,6 @@ function openSidebar() {
     document.body.classList.add("no-scroll");
     isSidebarOpen = true;
   }
-  // If isSidebarOpen is true, do nothing (sidebar stays open)
 }
 
 function fetchAndDisplayProducts() {
@@ -137,45 +185,30 @@ function createProductElement(product) {
   return productElement;
 }
 
+function addToCart(product) {
+  cartData.push(product);
+  localStorage.setItem("cart", JSON.stringify(cartData));
+  productArray = cartData.slice();
+  productDivMaker(product);
+
+  updateTotalSum();
+  openSidebar();
+}
+
 function addOrderButtonListeners() {
   const productsContainer = document.getElementById("products");
   productsContainer.addEventListener("click", function (event) {
     const target = event.target;
     if (target.classList.contains("order-button")) {
-      // Find the closest product element to the clicked button
       const productElement = target.closest(".product");
-
-      // Extract the product details from the product element
       const productTitle = productElement.querySelector("h2").textContent;
-      const productPrice = productElement.querySelector("p").textContent.replace('Price: ', '');
-
-      // Create a new product object with the extracted details
-      const product = new Product(productTitle, productPrice);
-
-      // Add the new product object to the cart array
-      cartData.push(product);
-
-      // Save the updated cart back to local storage, converting it to a JSON string
-      localStorage.setItem("cart", JSON.stringify(cartData));
-
-      // Optionally: provide some feedback or update the UI to reflect the item addition
-      //alert("Added to cart: " + productTitle);
-      openSidebar();
-      productDivMaker(product.title, product.price);
-      updateTotalSum();
+      const productPrice = productElement
+        .querySelector("p")
+        .textContent.replace("Price: ", "");
+      addToCart(new Product(productCounter++, productTitle, productPrice, 1));
     }
   });
 }
-
-
-function clearCart() {
-  while (ul.firstChild) {
-    ul.removeChild(ul.lastChild);
-  }
-  cartData = [];
-  updateTotalSum();
-}
-
 
 function validateForm() {
   const name = document.getElementById("name").value.trim();
@@ -227,18 +260,38 @@ function validateForm() {
   return true;
 }
 
+function deleteProduct(productId) {
+  const productIndex = cartData.findIndex(
+    (product) => product.id === productId
+  );
+  if (productIndex > -1) {
+    cartData.splice(productIndex, 1);
+    localStorage.setItem("cart", JSON.stringify(cartData));
+    productArray = cartData.slice();
+    const productElement = document.getElementById("div-" + productId).remove();
+    updateTotalSum();
+  }
+}
+
+function clearCart() {
+  while (ul.firstChild) {
+    ul.removeChild(ul.lastChild);
+  }
+  localStorage.removeItem("cart");
+  cartData = [];
+  productArray = [];
+  updateTotalSum();
+}
+
 function submitOrderForm(event) {
   event.preventDefault();
   if (validateForm()) {
     document.getElementById("orderForm").reset();
-    const orderedProduct = localStorage.getItem("selectedProduct");
-
-    document.getElementById("orderedProduct").textContent = orderedProduct;
     document.getElementById("confirmationMessage").style.display = "block";
 
     setTimeout(function () {
       window.location.href = "index.html";
-    }, 3000);
+    }, 5000);
   }
 }
 
@@ -254,7 +307,6 @@ window.onload = function () {
 
 window.onscroll = function () {
   var slider = document.getElementById("slider");
-
   if (window.scrollY > 20) {
     slider.classList.add("show");
   } else {
@@ -271,15 +323,17 @@ if (selectedProduct === null) {
 
 function handleSubmit(event) {
   event.preventDefault();
-
-  const orderedProduct = document.getElementById("product").value;
-
-  document.getElementById("orderedProduct").textContent = orderedProduct;
   document.getElementById("confirmationMessage").style.display = "block";
-
   return false;
 }
 
 function redirectToHomePage(url) {
   window.location.href = url;
+}
+
+function redirectToOrderPage() {
+  if (totalSum > 0) {
+    localStorage.setItem("totalPrice", totalSum.toFixed(2));
+    window.location.href = "order.html";
+  }
 }

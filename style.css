@@ -49,8 +49,8 @@ textarea {
 
 button {
   display: block;
-  margin-top: 10px;
 }
+
 /* Modern styling for product cards */
 .product {
   margin: 20px;
@@ -114,4 +114,10 @@ h1 {
   margin: 0; /* Remove margins */
 }
 
-
+input,
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  text-align: center;
+  margin: 0;
+}
