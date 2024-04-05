@@ -91,6 +91,8 @@ h1 {
   transition: 0.5s;
   height: 100%;
   z-index: 10;
+  overflow-y: auto; /* Allows vertical scrolling if content overflows */
+  max-height: 92vh; /* Sets the maximum height to 100% of the viewport height */
 }
 
 .cart-icon {
@@ -105,3 +107,11 @@ h1 {
 .sidebar.active {
   width: 800px;
 }
+
+#ul-cart {
+  list-style-type: none; /* Remove bullets */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margins */
+}
+
+
